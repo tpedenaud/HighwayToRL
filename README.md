@@ -1,40 +1,74 @@
 # HighwayToRL
 
-## Environment
-- **Environment**: `highway-v0`
-- **Configuration**: `shared_core_config.py`
-- **Observations**: `Kinematics`
-- **Actions**: `DiscreteMetaAction`
+Small reinforcement-learning project for the course benchmark on `highway-v0`.
 
----
+## Benchmark
+- Environment: `highway-v0`
+- Config: `shared_core_config.py`
+- Observation: `Kinematics`, flattened to 50 numbers
+- Actions: `DiscreteMetaAction`
+- Comparison: self-written DQN vs `stable_baselines3.DQN`
 
-## Objectives
-- Implement and train a **DQN agent** on the provided benchmark.
-- Train a **Stable-Baselines model** on the same setup.
-- Perform a rigorous comparison between both approaches.
+## Files
+- `common.py`: shared helpers, paths, env creation
+- `custom_dqn.py`: custom DQN training code
+- `train_sb3_dqn.py`: SB3 training code
+- `evaluate_models.py`: evaluation over fixed seeds
+- `report_results.py`: plots, tables, rollout analysis
+- `run_smoke.py`: quick end-to-end check
+- `run_core_experiment.py`: pilot + final training + evaluation + report
 
----
+## Setup
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
 
-## Evaluation Protocol
-- Save model checkpoints and training metrics.
+## Quick check
+```bash
+python run_smoke.py
+```
 
-- Evaluate each model over **50 episodes** by computing the mean reward and the standard deviation.
+This runs a tiny training job for both models, evaluates them on 3 episodes, and builds the report files.
 
-- Run experiments on **at least 3 different seeds**.
+## Main commands
+Train the custom DQN on seeds `0 1 2`:
+```bash
+python custom_dqn.py --seeds 0 1 2 --timesteps 200000 --device cpu
+```
 
----
+Train the SB3 DQN on seeds `0 1 2`:
+```bash
+python train_sb3_dqn.py --seeds 0 1 2 --timesteps 200000 --device cpu
+```
 
-## Expected Results
-- Training curves  
-- Evaluation table (at least 3 seeds)  
-- Fair comparison between DQN and Stable-Baselines:
-  - Same configuration  
-  - Same evaluation seeds  
-  - Same metrics  
+Evaluate both models on the shared evaluation seeds:
+```bash
+python evaluate_models.py --seeds 0 1 2 --device cpu
+```
 
----
+Build plots and markdown summaries:
+```bash
+python report_results.py --seeds 0 1 2 --device cpu
+```
 
-## Analysis
-- Qualitative analysis (recorded rollout or observed behavior)  
-- At least **one failure case** with explanation  
-- Brief discussion of design choices  
+Run the whole core pipeline in one script:
+```bash
+python run_core_experiment.py
+```
+
+## Outputs
+Everything is written under `artifacts/`:
+- `artifacts/custom_dqn/seed_<n>/...`
+- `artifacts/sb3_dqn/seed_<n>/...`
+- `artifacts/evaluation/comparison_summary.csv`
+- `artifacts/evaluation/comparison_summary.md`
+- `artifacts/reports/training_curves.png`
+- `artifacts/reports/core_task_summary.md`
+- `artifacts/reports/behavior_analysis.md`
+
+## Tests
+```bash
+python -m pytest
+```
