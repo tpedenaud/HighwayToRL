@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual env
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Generated outputs
+artifacts/
+random_highway.gif
+
+# Optional: local course material
+project_assignment_2026.pdf
