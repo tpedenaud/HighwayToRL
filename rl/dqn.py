@@ -6,7 +6,7 @@ import random
 import numpy as np
 
 class DQN:
-    def __init__(self, observation_space, action_space, buffer_capacity, batch_size, learning_rate, gamma, target_update_freq, epsilon, device):
+    def __init__(self, observation_space, action_space, buffer_capacity, batch_size, learning_rate, gamma, target_update_freq, epsilon, device, double_dqn=False):
         self.device = device
         self.observation_space = observation_space
         self.action_space = action_space
@@ -16,7 +16,7 @@ class DQN:
         self.target_update_freq = target_update_freq
         self.learning_rate = learning_rate
         self.epsilon = epsilon
-
+        self.double_dqn = double_dqn
         self.reset()
 
     def act(self, state, epsilon):
@@ -38,8 +38,14 @@ class DQN:
         dones = torch.as_tensor(dones, dtype=torch.float32, device=self.device)
 
         q_values = self.net(states).gather(1, actions.unsqueeze(1)).squeeze(1)
+
         with torch.no_grad():
-            next_q_values = self.target_net(next_states).max(1).values
+            if self.double_dqn:
+                next_actions = self.net(next_states).argmax(dim=1, keepdim=True)
+                next_q_values = self.target_net(next_states).gather(1, next_actions).squeeze(1)
+            else:
+                next_q_values = self.target_net(next_states).max(dim=1).values
+
             target_q_values = rewards + (1 - dones) * self.gamma * next_q_values
 
         loss = F.mse_loss(q_values, target_q_values)

@@ -11,7 +11,7 @@ from .utils import preprocess_observation
 from config import SHARED_CORE_ENV_ID, SHARED_CORE_CONFIG
 
 
-def train(seed=0, run_dir=None, env_config=None, train_env_configs=None):
+def train(seed=0, run_dir=None, env_config=None, train_env_configs=None, double_dqn=False):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -47,7 +47,8 @@ def train(seed=0, run_dir=None, env_config=None, train_env_configs=None):
         gamma=0.99,
         target_update_freq=1000,
         epsilon=1.0,
-        device=device
+        device=device,
+        double_dqn=double_dqn
     )
 
     total_steps = 20000
@@ -117,6 +118,7 @@ def train(seed=0, run_dir=None, env_config=None, train_env_configs=None):
                 "target_net_state_dict": agent.target_net.state_dict(),
                 "optimizer_state_dict": agent.optimizer.state_dict(),
                 "seed": seed,
+                "double_dqn": double_dqn,
             },
             run_dir / "checkpoint.pt",
         )
