@@ -11,13 +11,29 @@ from .utils import preprocess_observation
 from config import SHARED_CORE_ENV_ID, SHARED_CORE_CONFIG
 
 
-def train(seed=0, run_dir=None):
+def train(seed=0, run_dir=None, env_config=None, train_env_configs=None):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
 
-    env = gym.make(SHARED_CORE_ENV_ID, config=SHARED_CORE_CONFIG, render_mode="rgb_array")
+    if train_env_configs is None:
+        if env_config is None:
+            train_env_configs = [SHARED_CORE_CONFIG]
+        else:
+            train_env_configs = [env_config]
+
+    env = gym.make(SHARED_CORE_ENV_ID, config=train_env_configs[0])
     env.action_space.seed(seed)
+
+    config_rng = random.Random(seed)
+
+    def reset_episode(reset_seed):
+        episode_config = config_rng.choice(train_env_configs)
+        env.unwrapped.configure(episode_config)
+        obs, info = env.reset(seed=reset_seed)
+        obs = preprocess_observation(obs)
+        return obs, info
+
 
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     print(f"Using device: {device}")
@@ -41,8 +57,7 @@ def train(seed=0, run_dir=None):
     epsilon_min = 0.05
 
 
-    obs, info = env.reset(seed=seed)
-    obs = preprocess_observation(obs)
+    obs, info = reset_episode(seed)
 
     episode_return = 0.0
     episode_returns = []
@@ -80,8 +95,7 @@ def train(seed=0, run_dir=None):
             episode_returns.append(episode_return)
             episode_end_steps.append(step)
 
-            obs, info = env.reset(seed=seed + step)
-            obs = preprocess_observation(obs)
+            obs, info = reset_episode(seed + step)
             episode_return = 0.0
 
 
