@@ -55,10 +55,19 @@ def show_gif(gif_path):
     display(Image(filename=str(gif_path)))
 
 
-def show_side_by_side_gifs(left_path, right_path, left_title="custom", right_title="sb3"):
-    from IPython.display import HTML
+def show_side_by_side_gifs(
+    left_path,
+    middle_path,
+    right_path,
+    left_title="custom",
+    middle_title="baseline",
+    right_title="sb3",
+):
+    from IPython.display import HTML, display
+    from pathlib import Path
 
     left_path = Path(left_path)
+    middle_path = Path(middle_path)
     right_path = Path(right_path)
 
     html = f"""
@@ -66,6 +75,10 @@ def show_side_by_side_gifs(left_path, right_path, left_title="custom", right_tit
         <div>
             <div style="font-weight:bold; margin-bottom:8px;">{left_title}</div>
             <img src="{left_path}" style="max-width:100%;">
+        </div>
+        <div>
+            <div style="font-weight:bold; margin-bottom:8px;">{middle_title}</div>
+            <img src="{middle_path}" style="max-width:100%;">
         </div>
         <div>
             <div style="font-weight:bold; margin-bottom:8px;">{right_title}</div>

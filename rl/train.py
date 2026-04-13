@@ -7,11 +7,12 @@ import numpy as np
 import torch
 
 from .dqn import DQN
+from .ddqn_per import DDQN_PER
 from .utils import preprocess_observation
 from config import SHARED_CORE_ENV_ID, SHARED_CORE_CONFIG
 
 
-def train(seed=0, run_dir=None):
+def train(seed=0, run_dir=None, double_dqn=False):
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -22,17 +23,31 @@ def train(seed=0, run_dir=None):
     device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    agent = DQN(
-        observation_space=env.observation_space,
-        action_space=env.action_space,
-        buffer_capacity=10000,
-        batch_size=32,
-        learning_rate=0.001,
-        gamma=0.99,
-        target_update_freq=1000,
-        epsilon=1.0,
-        device=device
-    )
+    if double_dqn:
+        agent = DDQN_PER(
+            observation_space=env.observation_space,
+            action_space=env.action_space,
+            buffer_capacity=10000,
+            batch_size=32,
+            learning_rate=0.001,
+            gamma=0.99,
+            target_update_freq=1000,
+            epsilon=1.0,
+            device=device,
+            double_dqn=True,
+        )
+    else:
+        agent = DQN(
+            observation_space=env.observation_space,
+            action_space=env.action_space,
+            buffer_capacity=10000,
+            batch_size=32,
+            learning_rate=0.001,
+            gamma=0.99,
+            target_update_freq=1000,
+            epsilon=1.0,
+            device=device,
+        )
 
     total_steps = 20000
     learning_starts = 1000
@@ -49,7 +64,7 @@ def train(seed=0, run_dir=None):
     episode_end_steps = []
     losses = []
 
-
+    beta = 0.4
     for step in range(1, total_steps + 1):
         action = agent.act(obs, epsilon)
 
@@ -63,8 +78,16 @@ def train(seed=0, run_dir=None):
         episode_return += reward
 
         if len(agent.buffer) >= agent.batch_size and step >= learning_starts:
-            batch = agent.buffer.sample(agent.batch_size)
-            loss = agent.update(batch)
+            if double_dqn:
+
+                batch_data = agent.buffer.sample(agent.batch_size, beta)
+                loss = agent.update(batch_data)
+                beta = min(1.0, beta + 1e-4)
+
+            else:
+                batch = agent.buffer.sample(agent.batch_size)
+                loss = agent.update(batch)
+
             losses.append(loss)
 
         if step % agent.target_update_freq == 0:
