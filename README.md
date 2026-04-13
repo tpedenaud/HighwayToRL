@@ -19,9 +19,38 @@ Small reinforcement-learning project for the course benchmark on `highway-v0`.
 - `run_core_experiment.py`: pilot + final training + evaluation + report
 
 ## Setup
+Create the virtual environment:
+
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+python -m venv .venv
+```
+
+Activate it:
+
+- Windows (PowerShell)
+	```powershell
+	.\.venv\Scripts\Activate.ps1
+	```
+
+	If PowerShell blocks the script, run this once in the same shell and retry activation:
+	```powershell
+	Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+	.\.venv\Scripts\Activate.ps1
+	```
+
+- Windows (cmd.exe)
+	```bat
+	.venv\Scripts\activate.bat
+	```
+
+- macOS/Linux
+	```bash
+	source .venv/bin/activate
+	```
+
+Install dependencies:
+
+```bash
 pip install -r requirements.txt
 ```
 
