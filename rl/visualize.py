@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 from IPython.display import Image, display
 
@@ -44,6 +43,94 @@ def plot_metric_comparison(df):
         grouped = df.groupby("algo")[metric].mean()
         ax.bar(grouped.index, grouped.values)
         ax.set_title(metric)
+        ax.tick_params(axis="x", rotation=20)
+
+    plt.tight_layout()
+    plt.show()
+
+
+def make_extension_summary_table(results_df):
+    summary = (
+        results_df.groupby(["variant", "eval_env"])[
+            [
+                "mean_return",
+                "std_return",
+                "mean_length",
+                "crash_rate",
+                "mean_speed",
+                "actual_lane_change_rate",
+            ]
+        ]
+        .agg(["mean", "std"])
+        .round(3)
+    )
+    return summary
+
+
+def plot_extension_metric(results_df, metric):
+    summary = (
+        results_df.groupby(["eval_env", "variant"])[metric]
+        .agg(["mean", "std"])
+        .reset_index()
+    )
+    mean_table = summary.pivot(index="eval_env", columns="variant", values="mean")
+    std_table = summary.pivot(index="eval_env", columns="variant", values="std").fillna(0.0)
+
+    ax = mean_table.plot(
+        kind="bar",
+        yerr=std_table,
+        capsize=3,
+        figsize=(10, 4),
+    )
+    ax.set_title(metric.replace("_", " ").title())
+    ax.set_ylabel(metric)
+    ax.set_xlabel("evaluation environment")
+    ax.tick_params(axis="x", rotation=20)
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_observation_comparison(results_df, metric):
+    plot_extension_metric(results_df, metric)
+
+
+def plot_generalization_gap(results_df, metric, reference_env="shared"):
+    reference = (
+        results_df[results_df["eval_env"] == reference_env][["variant", "train_seed", metric]]
+        .rename(columns={metric: "reference_value"})
+    )
+    merged = results_df.merge(reference, on=["variant", "train_seed"], how="left")
+    merged = merged[merged["eval_env"] != reference_env].copy()
+    merged["gap"] = merged[metric] - merged["reference_value"]
+
+    summary = merged.groupby(["eval_env", "variant"])["gap"].agg(["mean", "std"]).reset_index()
+    mean_table = summary.pivot(index="eval_env", columns="variant", values="mean")
+    std_table = summary.pivot(index="eval_env", columns="variant", values="std").fillna(0.0)
+
+    ax = mean_table.plot(
+        kind="bar",
+        yerr=std_table,
+        capsize=3,
+        figsize=(10, 4),
+    )
+    ax.axhline(0.0, color="black", linewidth=1)
+    ax.set_title(f"{metric} gap vs {reference_env}")
+    ax.set_ylabel("delta")
+    ax.set_xlabel("evaluation environment")
+    ax.tick_params(axis="x", rotation=20)
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_pilot_safe_results(pilot_df):
+    fig, axes = plt.subplots(1, 2, figsize=(14, 4))
+
+    for ax, metric in zip(axes, ["mean_return", "crash_rate"]):
+        summary = pilot_df.groupby(["eval_env", "variant"])[metric].mean().reset_index()
+        table = summary.pivot(index="eval_env", columns="variant", values=metric)
+        table.plot(kind="bar", ax=ax)
+        ax.set_title(metric.replace("_", " ").title())
+        ax.set_xlabel("evaluation environment")
         ax.tick_params(axis="x", rotation=20)
 
     plt.tight_layout()

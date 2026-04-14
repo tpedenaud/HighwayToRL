@@ -12,8 +12,9 @@ __pycache__/
 .DS_Store
 
 # Generated outputs
-#artifacts/
+artifacts/
 random_highway.gif
+extension_v2.ipynb
 
 # Optional: local course material
 project_assignment_2026.pdf
