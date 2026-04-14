@@ -114,10 +114,11 @@ def build_q_network(observation_mode, observation_shape, num_actions, settings):
 
 
 class ExtensionDQNPolicy:
-    def __init__(self, q_network, observation_mode, device):
+    def __init__(self, q_network, observation_mode, device, expected_observation_shape=None):
         self.q_network = q_network
         self.observation_mode = observation_mode
         self.device = device
+        self.expected_observation_shape = tuple(expected_observation_shape) if expected_observation_shape is not None else None
 
     @classmethod
     def load(cls, checkpoint_path, device="cpu"):
@@ -133,10 +134,59 @@ class ExtensionDQNPolicy:
         q_network = q_network.to(device)
         q_network.load_state_dict(checkpoint["model_state_dict"])
         q_network.eval()
-        return cls(q_network, observation_mode, device)
+        return cls(
+            q_network,
+            observation_mode,
+            device,
+            expected_observation_shape=observation_shape,
+        )
+
+    def _align_observation(self, processed):
+        if self.expected_observation_shape is None:
+            return processed
+
+        # Kinematics is expected as a flat vector.
+        if self.observation_mode == "kinematics" and len(self.expected_observation_shape) == 1:
+            expected_dim = int(self.expected_observation_shape[0])
+            current_dim = int(processed.shape[0])
+            if current_dim > expected_dim:
+                return processed[:expected_dim]
+            if current_dim < expected_dim:
+                pad = np.zeros(expected_dim - current_dim, dtype=processed.dtype)
+                return np.concatenate([processed, pad], axis=0)
+            return processed
+
+        # Occupancy grid is expected as channel-first tensor (C, H, W).
+        if self.observation_mode == "occupancy_grid" and len(self.expected_observation_shape) == 3 and processed.ndim == 3:
+            exp_c, exp_h, exp_w = map(int, self.expected_observation_shape)
+
+            cur_c, cur_h, cur_w = map(int, processed.shape)
+
+            if cur_c > exp_c:
+                processed = processed[:exp_c, :, :]
+            elif cur_c < exp_c:
+                pad_c = np.zeros((exp_c - cur_c, cur_h, cur_w), dtype=processed.dtype)
+                processed = np.concatenate([processed, pad_c], axis=0)
+
+            cur_c, cur_h, cur_w = map(int, processed.shape)
+            if cur_h > exp_h:
+                processed = processed[:, :exp_h, :]
+            elif cur_h < exp_h:
+                pad_h = np.zeros((cur_c, exp_h - cur_h, cur_w), dtype=processed.dtype)
+                processed = np.concatenate([processed, pad_h], axis=1)
+
+            cur_c, cur_h, cur_w = map(int, processed.shape)
+            if cur_w > exp_w:
+                processed = processed[:, :, :exp_w]
+            elif cur_w < exp_w:
+                pad_w = np.zeros((cur_c, cur_h, exp_w - cur_w), dtype=processed.dtype)
+                processed = np.concatenate([processed, pad_w], axis=2)
+
+        return processed
 
     def predict(self, observation):
         processed = preprocess_observation(observation, self.observation_mode)
+        processed = self._align_observation(processed)
         with torch.no_grad():
             obs_tensor = torch.as_tensor(processed, dtype=torch.float32, device=self.device).unsqueeze(0)
             action = int(self.q_network(obs_tensor).argmax(dim=1).item())
