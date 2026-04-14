@@ -1,0 +1,95 @@
+{
+  "observation_mode": "occupancy_grid",
+  "seed": 2,
+  "total_timesteps": 30000,
+  "device": "cpu",
+  "environment_id": "highway-v0",
+  "environment_config": {
+    "observation": {
+      "type": "OccupancyGrid",
+      "features": [
+        "presence",
+        "x",
+        "y",
+        "vx",
+        "vy"
+      ],
+      "grid_size": [
+        [
+          -27.5,
+          27.5
+        ],
+        [
+          -27.5,
+          27.5
+        ]
+      ],
+      "grid_step": [
+        5,
+        5
+      ],
+      "as_image": false,
+      "align_to_vehicle_axes": true,
+      "absolute": false,
+      "normalize": true,
+      "clip": true
+    },
+    "action": {
+      "type": "DiscreteMetaAction",
+      "target_speeds": [
+        20,
+        25,
+        30
+      ]
+    },
+    "lanes_count": 4,
+    "vehicles_count": 45,
+    "controlled_vehicles": 1,
+    "initial_lane_id": null,
+    "duration": 30,
+    "ego_spacing": 2,
+    "vehicles_density": 1.0,
+    "collision_reward": -1.5,
+    "right_lane_reward": 0.0,
+    "high_speed_reward": 0.7,
+    "lane_change_reward": -0.02,
+    "reward_speed_range": [
+      22,
+      30
+    ],
+    "normalize_reward": true,
+    "offroad_terminal": true
+  },
+  "encoder_type": "cnn",
+  "dqn_settings": {
+    "gamma": 0.99,
+    "learning_rate": 0.0001,
+    "buffer_size": 100000,
+    "batch_size": 64,
+    "learning_starts": 8000,
+    "train_freq": 4,
+    "target_update_interval": 1000,
+    "epsilon_start": 1.0,
+    "epsilon_end": 0.05,
+    "epsilon_decay_steps": 80000,
+    "checkpoint_interval": 25000,
+    "gradient_clip_norm": 10.0,
+    "mlp_hidden_sizes": [
+      256,
+      256
+    ],
+    "cnn_channels": [
+      32,
+      64
+    ],
+    "cnn_kernel_sizes": [
+      5,
+      3
+    ],
+    "cnn_strides": [
+      2,
+      1
+    ],
+    "cnn_head_hidden": 128
+  }
+}

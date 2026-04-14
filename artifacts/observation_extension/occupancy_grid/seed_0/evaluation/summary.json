@@ -1,0 +1,11 @@
+{
+  "observation_mode": "occupancy_grid",
+  "train_seed": 0,
+  "num_eval_episodes": 30,
+  "mean_reward": 20.9773094007251,
+  "reward_std": 4.982433659211451,
+  "reward_median": 22.491489840343135,
+  "crash_rate": 0.16666666666666666,
+  "mean_episode_length": 27.633333333333333,
+  "mean_speed": 23.031177882518005
+}

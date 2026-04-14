@@ -1,0 +1,11 @@
+{
+  "observation_mode": "kinematics",
+  "train_seed": 0,
+  "num_eval_episodes": 50,
+  "mean_reward": 19.60215834125515,
+  "reward_std": 2.968039339503708,
+  "reward_median": 20.454545454545464,
+  "crash_rate": 0.08,
+  "mean_episode_length": 28.48,
+  "mean_speed": 20.689356717539248
+}
