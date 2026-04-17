@@ -1,3 +1,5 @@
+Groupe : Quentin GUIGNARD, Thomas PEDENAUD, Tomas STONE, Clara VEGA
+
 # HighwayToRL: Deep Q-Network for Highway Driving
 
 A reinforcement learning project implementing and comparing custom DQN agents with Stable-Baselines3 on the `highway-v0` environment, with advanced extensions for algorithmic improvements and observation representation exploration.
